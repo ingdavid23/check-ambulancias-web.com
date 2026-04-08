@@ -1,0 +1,1056 @@
+<!doctype html>
+<html lang="es" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AmbuCheck MX</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            surface: '#111118',
+            card: '#1a1a24',
+            accent: '#00e599',
+            warn: '#ffb020',
+            danger: '#ff4060',
+            muted: '#8888aa',
+            panel: '#22222e'
+          }
+        }
+      }
+    }
+  </script>
+  
+  <style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; font-family: 'DM Sans', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #111118; }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+    .fade-in { animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 8px rgba(0,229,153,0.3); } 50% { box-shadow: 0 0 20px rgba(0,229,153,0.6); } }
+    .glow { animation: pulse-glow 2s infinite; }
+    .stat-card { transition: transform 0.2s, box-shadow 0.2s; }
+    .stat-card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
+    input[type="checkbox"] { accent-color: #00e599; width: 20px; height: 20px; }
+    select, input[type="text"], input[type="password"], input[type="date"], textarea {
+      background: #22222e; border: 1px solid #333; color: #eee; border-radius: 8px; padding: 8px 12px; font-family: 'DM Sans', sans-serif;
+    }
+    select:focus, input:focus, textarea:focus { outline: none; border-color: #00e599; }
+    .nav-item { transition: all 0.2s; cursor: pointer; border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; gap: 10px; color: #8888aa; }
+    .nav-item:hover, .nav-item.active { background: #22222e; color: #00e599; }
+    .badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .badge-ok { background: rgba(0,229,153,0.15); color: #00e599; }
+    .badge-warn { background: rgba(255,176,32,0.15); color: #ffb020; }
+    .badge-danger { background: rgba(255,64,96,0.15); color: #ff4060; }
+    .progress-bar { height: 6px; border-radius: 3px; background: #333; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+    .checklist-item { background: #1a1a24; border: 1px solid #2a2a36; border-radius: 12px; padding: 14px; margin-bottom: 8px; transition: border-color 0.2s; }
+    .checklist-item:hover { border-color: #444; }
+    .checklist-item.checked { border-color: rgba(0,229,153,0.3); }
+    .tab-btn { padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; }
+    .tab-btn.active { background: #00e599; color: #111118; }
+    .tab-btn:not(.active) { background: #22222e; color: #8888aa; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 100; }
+    .modal-box { background: #1a1a24; border: 1px solid #333; border-radius: 16px; padding: 24px; max-width: 440px; width: 90%; }
+    .btn-primary { background: #00e599; color: #111118; font-weight: 600; padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; transition: all 0.2s; }
+    .btn-primary:hover { background: #00cc88; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-ghost { background: transparent; color: #8888aa; border: 1px solid #333; padding: 10px 20px; border-radius: 10px; cursor: pointer; transition: all 0.2s; }
+    .btn-ghost:hover { border-color: #00e599; color: #00e599; }
+    body { box-sizing: border-box; }
+  </style>
+ </head>
+ <body class="h-full bg-surface text-gray-200 overflow-hidden">
+  <div id="app" class="h-full w-full flex overflow-hidden">
+   <div id="login-screen" class="h-full w-full flex items-center justify-center" style="background: radial-gradient(ellipse at 30% 20%, rgba(0,229,153,0.08) 0%, transparent 60%);">
+    <div class="fade-in text-center w-full max-w-sm px-6">
+     <div class="mb-6">
+      <div class="w-20 h-20 mx-auto rounded-2xl bg-card border border-accent/30 flex items-center justify-center glow mb-4">
+       <svg width="40" height="40" viewbox="0 0 40 40" fill="none">
+        <rect x="16" y="8" width="8" height="24" rx="2" fill="#00e599" /><rect x="8" y="16" width="24" height="8" rx="2" fill="#00e599" />
+       </svg>
+      </div>
+      <h1 id="login-title" class="text-3xl font-bold text-white" style="font-family:'Space Mono',monospace;">AmbuCheck MX</h1>
+      <p id="login-org" class="text-muted mt-1 text-sm">Servicios de Emergencia</p>
+     </div>
+     <div class="space-y-4 text-left">
+      <div>
+        <label for="login-user" class="text-xs text-muted uppercase tracking-wider mb-1 block">Usuario</label> 
+        <input id="login-user" type="text" placeholder="Ej. operador01" class="w-full">
+      </div>
+      <div>
+        <label for="login-pass" class="text-xs text-muted uppercase tracking-wider mb-1 block">Contraseña</label> 
+        <input id="login-pass" type="password" placeholder="••••••••" class="w-full" onkeypress="if(event.key === 'Enter') window.doLogin()">
+      </div>
+      <button id="login-btn" class="btn-primary w-full mt-2 text-base" onclick="window.doLogin()">Ingresar</button>
+     </div>
+    </div>
+   </div>
+   
+   <div id="main-app" class="h-full w-full flex" style="display:none;">
+    <nav id="sidebar" class="w-56 h-full bg-card border-r border-gray-800 flex flex-col p-4 shrink-0" style="min-width:220px;">
+     <div class="flex items-center gap-3 mb-8 px-2">
+      <div class="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center">
+       <svg width="20" height="20" viewbox="0 0 40 40" fill="none">
+        <rect x="16" y="8" width="8" height="24" rx="2" fill="#00e599" /><rect x="8" y="16" width="24" height="8" rx="2" fill="#00e599" />
+       </svg>
+      </div><span id="sidebar-title" class="font-bold text-white text-sm" style="font-family:'Space Mono',monospace;">AmbuCheck MX</span>
+     </div>
+     <div class="space-y-1 flex-1">
+      <div class="nav-item active" data-page="dashboard" onclick="window.navigate('dashboard')">
+       <i data-lucide="layout-dashboard" style="width:18px;height:18px;"></i><span class="text-sm">Dashboard</span>
+      </div>
+      <div class="nav-item" data-page="ambulances" onclick="window.navigate('ambulances')">
+       <i data-lucide="truck" style="width:18px;height:18px;"></i><span class="text-sm">Ambulancias</span>
+      </div>
+      <div class="nav-item" data-page="checklist" onclick="window.navigate('checklist')">
+       <i data-lucide="clipboard-check" style="width:18px;height:18px;"></i><span class="text-sm">Checklist</span>
+      </div>
+      <div class="nav-item" data-page="alerts" onclick="window.navigate('alerts')">
+       <i data-lucide="alert-triangle" style="width:18px;height:18px;"></i><span class="text-sm">Alertas</span>
+      </div>
+      <div class="nav-item" data-page="reports" onclick="window.navigate('reports')">
+       <i data-lucide="bar-chart-3" style="width:18px;height:18px;"></i><span class="text-sm">Reportes</span>
+      </div>
+      <div class="nav-item admin-only" data-page="users" onclick="window.navigate('users')" style="display:none;">
+       <i data-lucide="users" style="width:18px;height:18px;"></i><span class="text-sm">Usuarios</span>
+      </div>
+      <div class="nav-item admin-only" data-page="settings" onclick="window.navigate('settings')" style="display:none;">
+       <i data-lucide="settings" style="width:18px;height:18px;"></i><span class="text-sm">Configuración</span>
+      </div>
+     </div>
+     <div class="border-t border-gray-800 pt-3 mt-3">
+      <div class="flex items-center gap-3 px-2">
+       <div class="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-accent text-xs font-bold" id="user-avatar">OP</div>
+       <div class="flex-1 min-w-0">
+        <div class="text-xs font-semibold text-white truncate" id="user-name">operador01</div>
+        <div class="text-xs text-muted truncate" id="user-role-label">Paramédico</div>
+       </div><button onclick="window.logout()" class="text-muted hover:text-danger transition-colors"><i data-lucide="log-out" style="width:16px;height:16px;"></i></button>
+      </div>
+     </div>
+    </nav>
+    
+    <main id="content-area" class="flex-1 h-full overflow-auto p-6" style="background: radial-gradient(ellipse at 80% 10%, rgba(0,229,153,0.04) 0%, transparent 50%);">
+     
+     <div id="page-dashboard" class="page fade-in">
+      <div class="flex items-center justify-between mb-6">
+       <div>
+        <h2 id="welcome-heading" class="text-2xl font-bold text-white">Panel de Control</h2>
+        <p class="text-muted text-sm mt-1">Resumen operativo en tiempo real</p>
+       </div>
+       <div class="flex items-center gap-2 text-xs text-muted">
+        <i data-lucide="clock" style="width:14px;height:14px;"></i><span id="current-time"></span>
+       </div>
+      </div>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+       <div class="stat-card bg-card border border-gray-800 rounded-2xl p-4">
+        <div class="flex items-center justify-between mb-3"><span class="text-xs text-muted uppercase tracking-wider">Ambulancias</span>
+         <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+          <i data-lucide="truck" style="width:16px;height:16px;color:#00e599;"></i>
+         </div>
+        </div>
+        <div class="text-3xl font-bold text-white" id="stat-total">6</div>
+        <div class="badge badge-ok mt-2">4 operativas</div>
+       </div>
+       <div class="stat-card bg-card border border-gray-800 rounded-2xl p-4">
+        <div class="flex items-center justify-between mb-3"><span class="text-xs text-muted uppercase tracking-wider">Checklists Hoy</span>
+         <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+          <i data-lucide="clipboard-check" style="width:16px;height:16px;color:#00e599;"></i>
+         </div>
+        </div>
+        <div class="text-3xl font-bold text-white" id="stat-checklists">0</div>
+        <div class="text-xs text-muted mt-2">de 6 requeridos</div>
+       </div>
+       <div class="stat-card bg-card border border-gray-800 rounded-2xl p-4">
+        <div class="flex items-center justify-between mb-3"><span class="text-xs text-muted uppercase tracking-wider">Alertas</span>
+         <div class="w-8 h-8 rounded-lg bg-danger/10 flex items-center justify-center">
+          <i data-lucide="alert-triangle" style="width:16px;height:16px;color:#ff4060;"></i>
+         </div>
+        </div>
+        <div class="text-3xl font-bold text-danger" id="stat-alerts">0</div>
+        <div class="badge badge-danger mt-2">Requieren atención</div>
+       </div>
+       <div class="stat-card bg-card border border-gray-800 rounded-2xl p-4">
+        <div class="flex items-center justify-between mb-3"><span class="text-xs text-muted uppercase tracking-wider">Cumplimiento</span>
+         <div class="w-8 h-8 rounded-lg bg-warn/10 flex items-center justify-center">
+          <i data-lucide="shield-check" style="width:16px;height:16px;color:#ffb020;"></i>
+         </div>
+        </div>
+        <div class="text-3xl font-bold text-white" id="stat-compliance">—</div>
+        <div class="progress-bar mt-2">
+         <div class="progress-fill bg-accent" id="compliance-bar" style="width:0%"></div>
+        </div>
+       </div>
+      </div>
+      <div class="bg-card border border-gray-800 rounded-2xl p-5 mb-6">
+       <h3 class="text-white font-semibold mb-4 flex items-center gap-2"><i data-lucide="truck" style="width:18px;height:18px;color:#00e599;"></i> Flota de Ambulancias</h3>
+       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="fleet-grid"></div>
+      </div>
+      <div class="bg-card border border-gray-800 rounded-2xl p-5">
+       <h3 class="text-white font-semibold mb-4 flex items-center gap-2"><i data-lucide="activity" style="width:18px;height:18px;color:#00e599;"></i> Actividad Reciente</h3>
+       <div id="activity-list" class="space-y-2 text-sm text-muted">
+        <p class="text-center py-4">Sin actividad registrada aún</p>
+       </div>
+      </div>
+     </div>
+     
+     <div id="page-ambulances" class="page fade-in" style="display:none;">
+      <div class="flex items-center justify-between mb-6">
+       <h2 class="text-2xl font-bold text-white">Gestión de Ambulancias</h2>
+      </div>
+      <div class="space-y-3" id="ambulance-list-page"></div>
+     </div>
+     
+     <div id="page-checklist" class="page fade-in" style="display:none;">
+      <div class="flex items-center justify-between mb-4">
+       <h2 class="text-2xl font-bold text-white">Checklist de Verificación</h2>
+      </div>
+      <div class="bg-card border border-gray-800 rounded-2xl p-4 mb-4"><label for="checklist-ambulance" class="text-xs text-muted uppercase tracking-wider mb-2 block">Seleccionar Ambulancia</label> <select id="checklist-ambulance" class="w-full max-w-xs" onchange="window.loadChecklistForAmbulance()"></select>
+      </div>
+      <div class="flex flex-wrap gap-2 mb-4" id="category-tabs"></div>
+      <div id="checklist-container" class="space-y-2"></div>
+      <div class="mt-6 flex items-center gap-3" id="checklist-submit-area" style="display:none;"><button class="btn-primary flex items-center gap-2" id="submit-checklist-btn" onclick="window.submitChecklist()"><i data-lucide="check-circle" style="width:18px;height:18px;"></i> Guardar Inspección</button> <span id="checklist-saving" class="text-sm text-muted" style="display:none;">Guardando en Firebase...</span> <span id="checklist-saved" class="text-sm text-accent" style="display:none;">✓ Guardado y Sincronizado</span>
+      </div>
+     </div>
+     
+     <div id="page-alerts" class="page fade-in" style="display:none;">
+      <h2 class="text-2xl font-bold text-white mb-6">Alertas e Incumplimientos</h2>
+      <div id="alerts-list" class="space-y-3"></div>
+     </div>
+     
+     <div id="page-reports" class="page fade-in" style="display:none;">
+      <h2 class="text-2xl font-bold text-white mb-6">Reportes y Auditoría</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+       <div class="bg-card border border-gray-800 rounded-2xl p-5 cursor-pointer stat-card" onclick="window.generateReport('compliance')">
+        <div class="flex items-center gap-3 mb-3">
+         <div class="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+          <i data-lucide="shield-check" style="width:20px;height:20px;color:#00e599;"></i>
+         </div>
+         <h3 class="text-white font-semibold">Reporte COFEPRIS</h3>
+        </div>
+        <p class="text-muted text-sm">Genera reporte de cumplimiento normativo para auditoría</p>
+       </div>
+       <div class="bg-card border border-gray-800 rounded-2xl p-5 cursor-pointer stat-card" onclick="window.generateReport('history')">
+        <div class="flex items-center gap-3 mb-3">
+         <div class="w-10 h-10 rounded-xl bg-warn/10 flex items-center justify-center">
+          <i data-lucide="history" style="width:20px;height:20px;color:#ffb020;"></i>
+         </div>
+         <h3 class="text-white font-semibold">Historial por Ambulancia</h3>
+        </div>
+        <p class="text-muted text-sm">Historial completo de verificaciones e inspecciones</p>
+       </div>
+       <div class="bg-card border border-gray-800 rounded-2xl p-5 cursor-pointer stat-card" onclick="window.generateReport('expiry')">
+        <div class="flex items-center gap-3 mb-3">
+         <div class="w-10 h-10 rounded-xl bg-danger/10 flex items-center justify-center">
+          <i data-lucide="calendar-x" style="width:20px;height:20px;color:#ff4060;"></i>
+         </div>
+         <h3 class="text-white font-semibold">Caducidades</h3>
+        </div>
+        <p class="text-muted text-sm">Medicamentos e insumos próximos a vencer</p>
+       </div>
+       <div class="bg-card border border-gray-800 rounded-2xl p-5 cursor-pointer stat-card" onclick="window.generateReport('fleet')">
+        <div class="flex items-center gap-3 mb-3">
+         <div class="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+          <i data-lucide="file-bar-chart" style="width:20px;height:20px;color:#00e599;"></i>
+         </div>
+         <h3 class="text-white font-semibold">Estado de Flota</h3>
+        </div>
+        <p class="text-muted text-sm">Resumen general del estado operativo</p>
+       </div>
+      </div>
+      <div id="report-output" class="bg-card border border-gray-800 rounded-2xl p-5" style="display:none;">
+       <div class="flex items-center justify-between mb-4">
+        <h3 class="text-white font-semibold" id="report-title">Reporte</h3><button class="btn-ghost text-xs flex items-center gap-1" onclick="window.downloadReport()"><i data-lucide="download" style="width:14px;height:14px;"></i> Descargar</button>
+       </div>
+       <div id="report-content" class="text-sm text-muted"></div>
+      </div>
+     </div>
+
+     <div id="page-users" class="page fade-in" style="display:none;">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-white">Gestión de Usuarios</h2>
+            <button class="btn-primary flex items-center gap-2 text-sm" onclick="window.openUserModal()"><i data-lucide="user-plus" style="width:16px;height:16px;"></i> Nuevo Usuario</button>
+        </div>
+        <div class="bg-card border border-gray-800 rounded-2xl overflow-hidden">
+            <table class="w-full text-left text-sm text-muted">
+                <thead class="bg-panel border-b border-gray-800 text-xs uppercase">
+                    <tr>
+                        <th class="px-5 py-3">Usuario</th>
+                        <th class="px-5 py-3">Contraseña</th>
+                        <th class="px-5 py-3">Rol</th>
+                        <th class="px-5 py-3 text-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="users-table-body" class="divide-y divide-gray-800">
+                    </tbody>
+            </table>
+        </div>
+     </div>
+     
+     <div id="page-settings" class="page fade-in" style="display:none;">
+      <h2 class="text-2xl font-bold text-white mb-6">Configuración</h2>
+      <div class="bg-card border border-gray-800 rounded-2xl p-5">
+       <p class="text-muted text-sm">Panel de administración. Solo disponible para administradores.</p>
+       <div class="mt-4 space-y-3">
+        <div class="flex items-center justify-between py-2 border-b border-gray-800"><span class="text-sm">Notificaciones por correo</span> <button class="w-12 h-6 rounded-full bg-accent/30 relative" onclick="this.classList.toggle('bg-accent');this.querySelector('span').classList.toggle('translate-x-6')"><span class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform"></span></button>
+        </div>
+        <div class="flex items-center justify-between py-2 border-b border-gray-800"><span class="text-sm">Recordatorios de checklist</span> <button class="w-12 h-6 rounded-full bg-accent relative" onclick="this.classList.toggle('bg-accent/30');this.querySelector('span').classList.toggle('translate-x-6')"><span class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform translate-x-6"></span></button>
+        </div>
+       </div>
+      </div>
+     </div>
+    </main>
+   </div>
+  </div>
+  
+  <div id="toast" class="fixed bottom-6 right-6 bg-card border border-accent/40 text-white px-5 py-3 rounded-xl shadow-2xl text-sm flex items-center gap-2 transition-all" style="display:none;z-index:200;"><i data-lucide="check-circle" style="width:16px;height:16px;color:#00e599;"></i> <span id="toast-text"></span></div>
+  
+  <div id="confirm-modal" class="modal-overlay" style="display:none;">
+   <div class="modal-box fade-in">
+    <h3 class="text-white font-semibold mb-2" id="confirm-title">¿Confirmar?</h3>
+    <p class="text-muted text-sm mb-4" id="confirm-msg"></p>
+    <div class="flex gap-2 justify-end"><button class="btn-ghost text-sm" onclick="window.hideConfirm()">Cancelar</button> <button class="btn-primary text-sm" id="confirm-ok-btn">Confirmar</button></div>
+   </div>
+  </div>
+
+  <div id="user-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-box fade-in">
+     <h3 class="text-white font-semibold mb-4" id="user-modal-title">Crear Usuario</h3>
+     <input type="hidden" id="user-id">
+     <div class="space-y-3">
+         <div>
+             <label class="text-xs text-muted block mb-1">Nombre de Usuario</label>
+             <input type="text" id="modal-username" class="w-full" placeholder="ej. supervisor02">
+         </div>
+         <div>
+             <label class="text-xs text-muted block mb-1">Contraseña</label>
+             <input type="text" id="modal-password" class="w-full" placeholder="••••••••">
+         </div>
+         <div>
+             <label class="text-xs text-muted block mb-1">Rol</label>
+             <select id="modal-role" class="w-full">
+                 <option value="admin">Administrador</option>
+                 <option value="supervisor">Supervisor</option>
+                 <option value="operator">Paramédico / Operador</option>
+             </select>
+         </div>
+     </div>
+     <div class="flex gap-2 justify-end mt-6">
+         <button class="btn-ghost text-sm" onclick="document.getElementById('user-modal').style.display='none'">Cancelar</button> 
+         <button class="btn-primary text-sm" onclick="window.saveUser()">Guardar</button>
+     </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // 1. IMPORTAMOS FIREBASE DESDE CDN (Versión Modular)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+    // 2. CONFIGURACIÓN DE FIREBASE
+    const firebaseConfig = {
+      apiKey: "AIzaSyBR_r6zSwe8CsE6gg9KPPGW1K9XfIog_g8",
+      authDomain: "ambulancias-db2f5.firebaseapp.com",
+      projectId: "ambulancias-db2f5",
+      storageBucket: "ambulancias-db2f5.firebasestorage.app",
+      messagingSenderId: "121554549426",
+      appId: "1:121554549426:web:1b4c141c765d8bd5b8a7ab",
+      measurementId: "G-552C9ZZCFG"
+    };
+
+    // 3. INICIALIZAR FIREBASE Y FIRESTORE
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const registrosRef = collection(db, "registros_checklist");
+    const usuariosRef = collection(db, "usuarios");
+
+    // ===== STATE =====
+    let currentUser = null;
+    let currentRole = null;
+    let currentPage = 'dashboard';
+    let allRecords = [];
+    let allUsers = [];
+    let checklistState = {};
+    let confirmCallback = null;
+
+    // ===== REFERENCE DATA ORIGINAL INTACTA =====
+    const AMBULANCES = [
+      { id: 'AMB-001', eco: 'E-101', type: 'Urgencias Básicas', plates: 'ABC-123', institution: 'Cruz Roja', status: 'operative' },
+      { id: 'AMB-002', eco: 'E-102', type: 'Urgencias Básicas', plates: 'DEF-456', institution: 'IMSS', status: 'operative' },
+      { id: 'AMB-003', eco: 'E-103', type: 'Traslado', plates: 'GHI-789', institution: 'ISSSTE', status: 'maintenance' },
+      { id: 'AMB-004', eco: 'E-104', type: 'Urgencias Avanzadas', plates: 'JKL-012', institution: 'Cruz Roja', status: 'operative' },
+      { id: 'AMB-005', eco: 'E-105', type: 'Urgencias Básicas', plates: 'MNO-345', institution: 'Bomberos', status: 'operative' },
+      { id: 'AMB-006', eco: 'E-106', type: 'Traslado', plates: 'PQR-678', institution: 'IMSS', status: 'non-operative' },
+    ];
+
+    const CATEGORIES = [
+      { key: 'generales', label: 'Generales', icon: 'file-text' },
+      { key: 'infraestructura', label: 'Infraestructura', icon: 'building' },
+      { key: 'recursos', label: 'Recursos Físicos', icon: 'wrench' },
+      { key: 'personal', label: 'Personal', icon: 'users' },
+      { key: 'equipo', label: 'Equipo Médico', icon: 'heart-pulse' },
+      { key: 'insumos', label: 'Insumos', icon: 'package' },
+      { key: 'medicamentos', label: 'Medicamentos', icon: 'pill' },
+    ];
+
+    const CHECKLIST_ITEMS = {
+      generales: [
+        { id:'g1', name:'Aviso de funcionamiento vigente', critical:true },
+        { id:'g2', name:'Responsable sanitario registrado', critical:true },
+        { id:'g3', name:'Protocolos de atención documentados', critical:false },
+        { id:'g4', name:'Registro de atención prehospitalaria', critical:false },
+        { id:'g5', name:'Mantenimiento vehicular al día', critical:true },
+        { id:'g6', name:'Rotulación normativa correcta', critical:false },
+        { id:'g7', name:'Sistema de luces operativo', critical:true },
+        { id:'g8', name:'Sirena funcional', critical:true },
+      ],
+      infraestructura: [
+        { id:'i1', name:'Espacio adecuado en cabina', critical:false },
+        { id:'i2', name:'Privacidad del paciente garantizada', critical:false },
+        { id:'i3', name:'Iluminación interior funcional', critical:true },
+        { id:'i4', name:'Dimensiones mínimas cumplidas', critical:false },
+        { id:'i5', name:'Ventilación adecuada', critical:false },
+      ],
+      recursos: [
+        { id:'r1', name:'Radio de comunicación operativo', critical:true },
+        { id:'r2', name:'Cinturones de seguridad (camilla)', critical:true },
+        { id:'r3', name:'Herramientas básicas', critical:false },
+        { id:'r4', name:'Extintor vigente', critical:true },
+        { id:'r5', name:'Lámpara de mano', critical:false },
+        { id:'r6', name:'Triángulos reflejantes', critical:false },
+      ],
+      personal: [
+        { id:'p1', name:'Capacitación BTLS/PHTLS documentada', critical:true },
+        { id:'p2', name:'Identificación oficial del personal', critical:false },
+        { id:'p3', name:'Uniforme reglamentario', critical:false },
+      ],
+      equipo: [
+        { id:'e1', name:'Bolsa-válvula-mascarilla adulto', critical:true },
+        { id:'e2', name:'Bolsa-válvula-mascarilla pediátrico', critical:true },
+        { id:'e3', name:'Bolsa-válvula-mascarilla neonatal', critical:false },
+        { id:'e4', name:'Camilla principal', critical:true },
+        { id:'e5', name:'Esfigmomanómetro', critical:true },
+        { id:'e6', name:'Estetoscopio', critical:true },
+        { id:'e7', name:'Tanque de oxígeno fijo', critical:true },
+        { id:'e8', name:'Tanque de oxígeno portátil', critical:true },
+        { id:'e9', name:'DEA / Desfibrilador', critical:true },
+        { id:'e10', name:'Glucómetro con tiras', critical:false },
+        { id:'e11', name:'Collarines (S, M, L)', critical:true },
+        { id:'e12', name:'Férulas (set completo)', critical:true },
+        { id:'e13', name:'Oxímetro de pulso', critical:true },
+        { id:'e14', name:'Equipo de parto', critical:false },
+        { id:'e15', name:'Tabla espinal larga', critical:true },
+        { id:'e16', name:'Inmovilizador cefálico', critical:true },
+      ],
+      insumos: [
+        { id:'s1', name:'Gasas estériles', critical:false, hasExpiry:true },
+        { id:'s2', name:'Vendas elásticas', critical:false },
+        { id:'s3', name:'Solución salina 0.9%', critical:true, hasExpiry:true },
+        { id:'s4', name:'Catéteres IV (varios calibres)', critical:true, hasExpiry:true },
+        { id:'s5', name:'Jeringas desechables', critical:false, hasExpiry:true },
+        { id:'s6', name:'Bolsas RPBI (roja, amarilla)', critical:true },
+        { id:'s7', name:'Contenedor punzocortantes', critical:true },
+        { id:'s8', name:'Guantes de nitrilo', critical:false },
+        { id:'s9', name:'Cinta microporo', critical:false },
+      ],
+      medicamentos: [
+        { id:'m1', name:'Epinefrina', critical:true, hasExpiry:true },
+        { id:'m2', name:'Atropina', critical:true, hasExpiry:true },
+        { id:'m3', name:'Solución glucosada 50%', critical:true, hasExpiry:true },
+        { id:'m4', name:'Diazepam', critical:false, hasExpiry:true },
+        { id:'m5', name:'Salbutamol inhalador', critical:false, hasExpiry:true },
+        { id:'m6', name:'Carbón activado', critical:false, hasExpiry:true },
+        { id:'m7', name:'Lidocaína', critical:false, hasExpiry:true },
+      ],
+    };
+
+    let activeCategory = 'generales';
+
+    // ===== 4. ESCUCHADORES EN TIEMPO REAL =====
+    onSnapshot(registrosRef, (snapshot) => {
+        const data = [];
+        snapshot.forEach((doc) => data.push({ id: doc.id, ...doc.data() }));
+        allRecords = data;
+        if(currentUser) {
+            updateDashboardStats();
+            updateAlerts();
+            updateActivityList();
+        }
+    });
+
+    onSnapshot(usuariosRef, (snapshot) => {
+        const users = [];
+        snapshot.forEach((doc) => users.push({ id: doc.id, ...doc.data() }));
+        allUsers = users;
+        if(currentUser && currentRole === 'admin') {
+            renderUsersTable();
+        }
+    });
+
+    // ===== ELEMENT SDK INIT =====
+    const defaultConfig = {
+      app_title: 'AmbuCheck MX',
+      org_name: 'Servicios de Emergencia',
+      welcome_text: 'Panel de Control',
+      background_color: '#111118',
+      surface_color: '#1a1a24',
+      text_color: '#e0e0ee',
+      primary_action_color: '#00e599',
+      secondary_action_color: '#8888aa',
+      font_family: 'DM Sans',
+      font_size: 14,
+    };
+
+    function applyConfig(config) {
+      const c = { ...defaultConfig, ...config };
+      document.body.style.fontFamily = `${c.font_family}, sans-serif`;
+      document.body.style.fontSize = `${c.font_size}px`;
+      document.body.style.backgroundColor = c.background_color;
+      document.body.style.color = c.text_color;
+
+      document.querySelectorAll('.bg-card, .stat-card .bg-card').forEach(el => el.style.backgroundColor = c.surface_color);
+      document.querySelectorAll('.btn-primary').forEach(el => { el.style.backgroundColor = c.primary_action_color; });
+      document.querySelectorAll('.text-muted, .btn-ghost').forEach(el => el.style.color = c.secondary_action_color);
+
+      const lt = document.getElementById('login-title'); if (lt) lt.textContent = c.app_title;
+      const lo = document.getElementById('login-org'); if (lo) lo.textContent = c.org_name;
+      const st = document.getElementById('sidebar-title'); if (st) st.textContent = c.app_title;
+      const wh = document.getElementById('welcome-heading'); if (wh) wh.textContent = c.welcome_text;
+    }
+    if (window.elementSdk) { window.elementSdk.init({ defaultConfig, onConfigChange: async (config) => applyConfig(config) }); }
+
+    // ===== LÓGICA DE LOGIN =====
+    window.doLogin = async function() {
+      const user = document.getElementById('login-user').value.trim();
+      const pass = document.getElementById('login-pass').value.trim();
+      const btn = document.getElementById('login-btn');
+
+      if(!user || !pass) return window.showToast("Ingresa usuario y contraseña");
+
+      btn.textContent = "Verificando...";
+      btn.disabled = true;
+
+      try {
+          const q = query(usuariosRef, where("username", "==", user), where("password", "==", pass));
+          const querySnapshot = await getDocs(q);
+
+          if (querySnapshot.empty) {
+              const allUsersCheck = await getDocs(usuariosRef);
+              if (allUsersCheck.empty && user === 'admin' && pass === 'admin') {
+                  await addDoc(usuariosRef, { username: 'admin', password: 'admin123', role: 'admin' });
+                  window.showToast("Usuario administrador inicial creado (admin / admin123). Vuelve a intentar.");
+                  btn.textContent = "Ingresar";
+                  btn.disabled = false;
+                  return;
+              }
+
+              btn.textContent = "Ingresar";
+              btn.disabled = false;
+              return window.showToast("Credenciales incorrectas");
+          }
+
+          const userData = querySnapshot.docs[0].data();
+          currentUser = userData.username;
+          currentRole = userData.role;
+
+          document.getElementById('login-screen').style.display = 'none';
+          document.getElementById('main-app').style.display = 'flex';
+          document.getElementById('user-name').textContent = currentUser;
+          const roleLabels = { admin: 'Administrador', supervisor: 'Supervisor', operator: 'Paramédico' };
+          document.getElementById('user-role-label').textContent = roleLabels[currentRole];
+          document.getElementById('user-avatar').textContent = currentUser.substring(0,2).toUpperCase();
+
+          document.querySelectorAll('.admin-only').forEach(el => el.style.display = (currentRole === 'admin') ? 'flex' : 'none');
+
+          renderFleet();
+          renderAmbulanceList();
+          renderChecklistAmbulanceSelector();
+          updateTime();
+          setInterval(updateTime, 60000);
+          
+          updateDashboardStats();
+          updateAlerts();
+          updateActivityList();
+          lucide.createIcons();
+
+      } catch (error) {
+          console.error("Error en login:", error);
+          window.showToast("Error de conexión");
+          btn.textContent = "Ingresar";
+          btn.disabled = false;
+      }
+    };
+
+    window.logout = function() {
+      currentUser = null;
+      currentRole = null;
+      document.getElementById('login-user').value = '';
+      document.getElementById('login-pass').value = '';
+      document.getElementById('login-btn').textContent = 'Ingresar';
+      document.getElementById('login-btn').disabled = false;
+      document.getElementById('login-screen').style.display = 'flex';
+      document.getElementById('main-app').style.display = 'none';
+    };
+
+    window.navigate = function(page) {
+      currentPage = page;
+      document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+      const target = document.getElementById('page-' + page);
+      if (target) { target.style.display = ''; target.classList.remove('fade-in'); void target.offsetWidth; target.classList.add('fade-in'); }
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.page === page));
+      
+      if (page === 'checklist') window.loadChecklistForAmbulance();
+      if (page === 'alerts') updateAlerts();
+      if (page === 'users' && currentRole === 'admin') renderUsersTable();
+      lucide.createIcons();
+    };
+
+    function updateTime() {
+      const now = new Date();
+      const el = document.getElementById('current-time');
+      if (el) el.textContent = now.toLocaleDateString('es-MX', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) + ' · ' + now.toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' });
+    }
+
+    // ===== GESTIÓN DE USUARIOS =====
+    function renderUsersTable() {
+        const tbody = document.getElementById('users-table-body');
+        const roleLabels = { admin: 'Administrador', supervisor: 'Supervisor', operator: 'Paramédico' };
+        
+        tbody.innerHTML = allUsers.map(u => `
+            <tr class="hover:bg-card/50 transition-colors">
+                <td class="px-5 py-4 font-medium text-white flex items-center gap-2">
+                    <div class="w-6 h-6 rounded bg-accent/20 text-accent flex items-center justify-center text-xs font-bold">${u.username.substring(0,1).toUpperCase()}</div>
+                    ${u.username}
+                </td>
+                <td class="px-5 py-4 text-muted font-mono text-xs">${u.password}</td>
+                <td class="px-5 py-4"><span class="badge ${u.role==='admin'?'badge-danger':u.role==='supervisor'?'badge-warn':'badge-ok'}">${roleLabels[u.role]||u.role}</span></td>
+                <td class="px-5 py-4 text-right space-x-2">
+                    <button class="text-accent hover:text-white transition-colors" onclick="window.openUserModal('${u.id}')"><i data-lucide="edit" style="width:16px;height:16px;display:inline;"></i></button>
+                    ${u.username !== currentUser ? `<button class="text-danger hover:text-white transition-colors" onclick="window.confirmDeleteUser('${u.id}', '${u.username}')"><i data-lucide="trash-2" style="width:16px;height:16px;display:inline;"></i></button>` : ''}
+                </td>
+            </tr>
+        `).join('');
+        lucide.createIcons();
+    }
+
+    window.openUserModal = function(id = null) {
+        document.getElementById('user-id').value = id || '';
+        document.getElementById('user-modal-title').textContent = id ? 'Editar Usuario' : 'Nuevo Usuario';
+        
+        if (id) {
+            const user = allUsers.find(u => u.id === id);
+            document.getElementById('modal-username').value = user.username;
+            document.getElementById('modal-password').value = user.password;
+            document.getElementById('modal-role').value = user.role;
+        } else {
+            document.getElementById('modal-username').value = '';
+            document.getElementById('modal-password').value = '';
+            document.getElementById('modal-role').value = 'operator';
+        }
+        
+        document.getElementById('user-modal').style.display = 'flex';
+    };
+
+    window.saveUser = async function() {
+        const id = document.getElementById('user-id').value;
+        const username = document.getElementById('modal-username').value.trim();
+        const password = document.getElementById('modal-password').value.trim();
+        const role = document.getElementById('modal-role').value;
+
+        if (!username || !password) return window.showToast("El usuario y contraseña son obligatorios");
+
+        if (!id && allUsers.some(u => u.username.toLowerCase() === username.toLowerCase())) {
+            return window.showToast("Ese nombre de usuario ya existe.");
+        }
+
+        try {
+            if (id) {
+                await updateDoc(doc(db, "usuarios", id), { username, password, role });
+                window.showToast("Usuario actualizado");
+            } else {
+                await addDoc(usuariosRef, { username, password, role });
+                window.showToast("Usuario creado con éxito");
+            }
+            document.getElementById('user-modal').style.display = 'none';
+        } catch (error) {
+            window.showToast("Error al guardar el usuario");
+        }
+    };
+
+    window.confirmDeleteUser = function(id, username) {
+        window.showConfirm("Eliminar Usuario", `¿Estás seguro de eliminar permanentemente a "${username}"?`, async () => {
+            try {
+                await deleteDoc(doc(db, "usuarios", id));
+                window.showToast("Usuario eliminado");
+            } catch (error) {
+                window.showToast("Error al eliminar");
+            }
+        });
+    };
+
+    // ===== RENDERIZADO Y LÓGICA CORE =====
+    function renderFleet() {
+      const grid = document.getElementById('fleet-grid');
+      grid.innerHTML = AMBULANCES.map(a => {
+        const statusMap = { operative: ['Operativa','badge-ok'], maintenance: ['Mantenimiento','badge-warn'], 'non-operative': ['No Operativa','badge-danger'] };
+        const [label, cls] = statusMap[a.status] || ['—',''];
+        const todayRecords = allRecords.filter(r => r.ambulance_id === a.id && r.completed_at && new Date(r.completed_at).toDateString() === new Date().toDateString());
+        const checked = todayRecords.length > 0;
+        return `<div class="bg-panel border border-gray-800 rounded-xl p-4 flex items-center gap-4 cursor-pointer stat-card" onclick="window.navigate('checklist');document.getElementById('checklist-ambulance').value='${a.id}';window.loadChecklistForAmbulance();">
+          <div class="w-12 h-12 rounded-xl ${a.status==='operative'?'bg-accent/10':'bg-danger/10'} flex items-center justify-center shrink-0">
+            <i data-lucide="truck" style="width:24px;height:24px;color:${a.status==='operative'?'#00e599':'#ff4060'};"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-white font-semibold text-sm">${a.eco} · ${a.id}</div>
+            <div class="text-xs text-muted">${a.type} — ${a.institution}</div>
+            <div class="flex items-center gap-2 mt-1">
+              <span class="badge ${cls}">${label}</span>
+              ${checked ? '<span class="badge badge-ok">✓ Verificada</span>' : '<span class="badge badge-warn">Pendiente</span>'}
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    function renderAmbulanceList() {
+      const list = document.getElementById('ambulance-list-page');
+      list.innerHTML = AMBULANCES.map(a => {
+        const statusMap = { operative: ['Operativa','badge-ok'], maintenance: ['Mantenimiento','badge-warn'], 'non-operative': ['No Operativa','badge-danger'] };
+        const [label, cls] = statusMap[a.status] || ['—',''];
+        const recs = allRecords.filter(r => r.ambulance_id === a.id).length;
+        return `<div class="bg-card border border-gray-800 rounded-2xl p-5 flex items-center gap-4">
+          <div class="w-14 h-14 rounded-xl ${a.status==='operative'?'bg-accent/10':'bg-danger/10'} flex items-center justify-center shrink-0">
+            <i data-lucide="truck" style="width:28px;height:28px;color:${a.status==='operative'?'#00e599':'#ff4060'};"></i>
+          </div>
+          <div class="flex-1">
+            <div class="text-white font-semibold">${a.eco} — ${a.id}</div>
+            <div class="text-sm text-muted">${a.type} · ${a.institution} · Placas: ${a.plates}</div>
+            <div class="flex items-center gap-2 mt-2"><span class="badge ${cls}">${label}</span><span class="text-xs text-muted">${recs} inspecciones</span></div>
+          </div>
+        </div>`;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    function updateDashboardStats() {
+      const today = new Date().toDateString();
+      const todayRecs = allRecords.filter(r => r.completed_at && new Date(r.completed_at).toDateString() === today);
+      const uniqueAmbs = new Set(todayRecs.map(r => r.ambulance_id));
+      document.getElementById('stat-checklists').textContent = uniqueAmbs.size;
+
+      const alerts = allRecords.filter(r => r.is_critical && r.status !== 'ok');
+      document.getElementById('stat-alerts').textContent = alerts.length;
+
+      if (allRecords.length > 0) {
+        const ok = allRecords.filter(r => r.status === 'ok').length;
+        const pct = Math.round((ok / allRecords.length) * 100);
+        document.getElementById('stat-compliance').textContent = pct + '%';
+        document.getElementById('compliance-bar').style.width = pct + '%';
+      }
+      renderFleet();
+      renderAmbulanceList();
+    }
+
+    function updateActivityList() {
+      const list = document.getElementById('activity-list');
+      const recent = [...allRecords].sort((a,b) => new Date(b.completed_at||0) - new Date(a.completed_at||0)).slice(0,8);
+      if (recent.length === 0) { list.innerHTML = '<p class="text-center py-4 text-muted">Sin actividad registrada aún</p>'; return; }
+      list.innerHTML = recent.map(r => {
+        const amb = AMBULANCES.find(a => a.id === r.ambulance_id);
+        const time = r.completed_at ? new Date(r.completed_at).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '';
+        const statusIcon = r.status === 'ok' ? '✅' : r.status === 'fail' ? '❌' : '⚠️';
+        return `<div class="flex items-center gap-3 py-2 border-b border-gray-800/50">
+          <span>${statusIcon}</span>
+          <span class="flex-1 truncate">${r.item_name} — <span class="text-xs text-muted">${amb?.eco||r.ambulance_id}</span></span>
+          <span class="text-xs text-muted">${time}</span>
+        </div>`;
+      }).join('');
+    }
+
+    function renderChecklistAmbulanceSelector() {
+      const sel = document.getElementById('checklist-ambulance');
+      sel.innerHTML = '<option value="">— Seleccionar —</option>' + AMBULANCES.map(a => `<option value="${a.id}">${a.eco} · ${a.id} (${a.type})</option>`).join('');
+    }
+
+    window.loadChecklistForAmbulance = function() {
+      const ambId = document.getElementById('checklist-ambulance').value;
+      if (!ambId) { document.getElementById('checklist-container').innerHTML = '<p class="text-muted text-center py-8">Selecciona una ambulancia para iniciar</p>'; document.getElementById('checklist-submit-area').style.display='none'; document.getElementById('category-tabs').innerHTML=''; return; }
+
+      checklistState = {};
+      const today = new Date().toDateString();
+      allRecords.filter(r => r.ambulance_id === ambId && r.completed_at && new Date(r.completed_at).toDateString() === today).forEach(r => {
+        checklistState[r.category + '_' + r.item_name] = { status: r.status, condition: r.condition, notes: r.notes, expiry: r.expiry_date, record: r };
+      });
+
+      renderCategoryTabs();
+      renderChecklistItems();
+      document.getElementById('checklist-submit-area').style.display = 'flex';
+    };
+
+    window.switchCategory = function(key) {
+        activeCategory = key;
+        renderCategoryTabs();
+        renderChecklistItems();
+    };
+
+    function renderCategoryTabs() {
+      const container = document.getElementById('category-tabs');
+      container.innerHTML = CATEGORIES.map(c => `<button class="tab-btn ${c.key===activeCategory?'active':''}" onclick="window.switchCategory('${c.key}')">${c.label}</button>`).join('');
+    }
+
+    function renderChecklistItems() {
+      const container = document.getElementById('checklist-container');
+      const items = CHECKLIST_ITEMS[activeCategory] || [];
+      const ambId = document.getElementById('checklist-ambulance').value;
+
+      container.innerHTML = items.map(item => {
+        const key = activeCategory + '_' + item.name;
+        const state = checklistState[key] || {};
+        const isChecked = state.status === 'ok';
+        const cond = state.condition || '';
+        return `<div class="checklist-item ${isChecked?'checked':''}" id="ci-${item.id}">
+          <div class="flex items-center gap-3">
+            <input type="checkbox" id="chk-${item.id}" ${isChecked?'checked':''} onchange="window.toggleItem('${item.id}','${activeCategory}','${item.name.replace(/'/g,"\\'")}',${item.critical},this.checked)">
+            <label for="chk-${item.id}" class="flex-1 cursor-pointer">
+              <span class="text-sm text-white">${item.name}</span>
+              ${item.critical ? '<span class="badge badge-danger ml-2" style="font-size:10px;">CRÍTICO</span>' : ''}
+            </label>
+          </div>
+          <div class="flex flex-wrap items-center gap-3 mt-3 ml-8">
+            <select class="text-xs py-1 px-2" onchange="window.updateItemCondition('${item.id}','${activeCategory}','${item.name.replace(/'/g,"\\'")}',this.value)" style="min-width:100px;">
+              <option value="" ${!cond?'selected':''}>Estado...</option>
+              <option value="bueno" ${cond==='bueno'?'selected':''}>✅ Bueno</option>
+              <option value="regular" ${cond==='regular'?'selected':''}>⚠️ Regular</option>
+              <option value="malo" ${cond==='malo'?'selected':''}>❌ Malo</option>
+            </select>
+            ${item.hasExpiry ? `<input type="date" class="text-xs py-1 px-2" value="${state.expiry||''}" onchange="window.updateItemExpiry('${item.id}','${activeCategory}','${item.name.replace(/'/g,"\\'")}',this.value)" title="Fecha de caducidad">` : ''}
+            <input type="text" placeholder="Notas..." class="text-xs py-1 px-2 flex-1" style="min-width:120px;" value="${state.notes||''}" onchange="window.updateItemNotes('${item.id}','${activeCategory}','${item.name.replace(/'/g,"\\'")}',this.value)">
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    window.toggleItem = function(id, cat, name, critical, checked) {
+      const key = cat + '_' + name;
+      if (!checklistState[key]) checklistState[key] = {};
+      checklistState[key].status = checked ? 'ok' : 'fail';
+      checklistState[key].is_critical = critical;
+      const el = document.getElementById('ci-' + id);
+      if (el) el.classList.toggle('checked', checked);
+    };
+
+    window.updateItemCondition = function(id, cat, name, val) {
+      const key = cat + '_' + name;
+      if (!checklistState[key]) checklistState[key] = {};
+      checklistState[key].condition = val;
+    };
+    window.updateItemExpiry = function(id, cat, name, val) {
+      const key = cat + '_' + name;
+      if (!checklistState[key]) checklistState[key] = {};
+      checklistState[key].expiry = val;
+    };
+    window.updateItemNotes = function(id, cat, name, val) {
+      const key = cat + '_' + name;
+      if (!checklistState[key]) checklistState[key] = {};
+      checklistState[key].notes = val;
+    };
+
+    window.submitChecklist = async function() {
+      const ambId = document.getElementById('checklist-ambulance').value;
+      if (!ambId) return;
+
+      const btn = document.getElementById('submit-checklist-btn');
+      const saving = document.getElementById('checklist-saving');
+      const saved = document.getElementById('checklist-saved');
+      btn.disabled = true;
+      saving.style.display = '';
+      saved.style.display = 'none';
+
+      const now = new Date().toISOString();
+      let successCount = 0;
+      const entries = Object.entries(checklistState);
+
+      for (const [key, state] of entries) {
+        const [cat, ...nameParts] = key.split('_');
+        const name = nameParts.join('_');
+        
+        try {
+            if (state.record && state.record.id) {
+                const docRef = doc(db, "registros_checklist", state.record.id);
+                await updateDoc(docRef, {
+                    status: state.status || 'pending',
+                    condition: state.condition || '',
+                    notes: state.notes || '',
+                    expiry_date: state.expiry || '',
+                    is_critical: !!state.is_critical,
+                    updated_at: now
+                });
+                successCount++;
+            } else {
+                await addDoc(collection(db, "registros_checklist"), {
+                    type: 'checklist',
+                    ambulance_id: ambId,
+                    category: cat,
+                    item_name: name,
+                    status: state.status || 'pending',
+                    condition: state.condition || '',
+                    notes: state.notes || '',
+                    completed_by: currentUser || '',
+                    completed_at: now,
+                    geo_lat: '', 
+                    geo_lng: '',
+                    expiry_date: state.expiry || '',
+                    is_critical: !!state.is_critical,
+                });
+                successCount++;
+            }
+        } catch (error) {
+            console.error("Error al escribir en Firebase: ", error);
+        }
+      }
+
+      btn.disabled = false;
+      saving.style.display = 'none';
+      saved.style.display = '';
+      window.showToast(`✓ ${successCount} ítems guardados para ${ambId} exitosamente.`);
+      setTimeout(() => { saved.style.display = 'none'; }, 3000);
+    };
+
+    function updateAlerts() {
+      const list = document.getElementById('alerts-list');
+      const alerts = [];
+
+      allRecords.filter(r => r.is_critical && r.status !== 'ok').forEach(r => {
+        const amb = AMBULANCES.find(a => a.id === r.ambulance_id);
+        alerts.push({ level:'danger', icon:'alert-triangle', msg:`${r.item_name} — ${amb?.eco||r.ambulance_id}: No cumple (crítico)`, time: r.completed_at });
+      });
+
+      const now = new Date();
+      allRecords.filter(r => r.expiry_date).forEach(r => {
+        const exp = new Date(r.expiry_date);
+        const diff = (exp - now) / (1000*60*60*24);
+        if (diff < 0) {
+          alerts.push({ level:'danger', icon:'calendar-x', msg:`${r.item_name} — CADUCADO (${r.expiry_date})`, time: r.completed_at });
+        } else if (diff < 30) {
+          alerts.push({ level:'warn', icon:'clock', msg:`${r.item_name} — Caduca en ${Math.round(diff)} días`, time: r.completed_at });
+        }
+      });
+
+      const today = new Date().toDateString();
+      const checkedToday = new Set(allRecords.filter(r=>r.completed_at && new Date(r.completed_at).toDateString()===today).map(r=>r.ambulance_id));
+      AMBULANCES.filter(a => !checkedToday.has(a.id) && a.status === 'operative').forEach(a => {
+        alerts.push({ level:'warn', icon:'clipboard', msg:`${a.eco} — Sin verificación hoy`, time: null });
+      });
+
+      if (alerts.length === 0) {
+        list.innerHTML = '<div class="text-center py-8 text-muted"><i data-lucide="check-circle" style="width:40px;height:40px;color:#00e599;margin:0 auto 12px;display:block;"></i><p>Sin alertas activas. ¡Todo en orden!</p></div>';
+        lucide.createIcons();
+        return;
+      }
+
+      list.innerHTML = alerts.map(a => `<div class="bg-card border border-gray-800 rounded-xl p-4 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg ${a.level==='danger'?'bg-danger/10':'bg-warn/10'} flex items-center justify-center shrink-0">
+          <i data-lucide="${a.icon}" style="width:20px;height:20px;color:${a.level==='danger'?'#ff4060':'#ffb020'};"></i>
+        </div>
+        <div class="flex-1">
+          <span class="text-sm text-white">${a.msg}</span>
+        </div>
+        <span class="badge ${a.level==='danger'?'badge-danger':'badge-warn'}">${a.level==='danger'?'Crítico':'Atención'}</span>
+      </div>`).join('');
+      lucide.createIcons();
+    }
+
+    window.generateReport = function(type) {
+      const output = document.getElementById('report-output');
+      const title = document.getElementById('report-title');
+      const content = document.getElementById('report-content');
+      output.style.display = '';
+
+      const today = new Date().toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'});
+
+      if (type === 'compliance') {
+        title.textContent = 'Reporte de Cumplimiento COFEPRIS';
+        const total = allRecords.length;
+        const ok = allRecords.filter(r=>r.status==='ok').length;
+        const crit = allRecords.filter(r=>r.is_critical && r.status!=='ok').length;
+        content.innerHTML = `<p class="mb-3"><strong>Fecha:</strong> ${today}</p>
+        <div class="grid grid-cols-3 gap-3 mb-4">
+          <div class="bg-panel rounded-lg p-3 text-center"><div class="text-2xl font-bold text-white">${total}</div><div class="text-xs">Total ítems evaluados</div></div>
+          <div class="bg-panel rounded-lg p-3 text-center"><div class="text-2xl font-bold text-accent">${ok}</div><div class="text-xs">Cumplidos</div></div>
+          <div class="bg-panel rounded-lg p-3 text-center"><div class="text-2xl font-bold text-danger">${crit}</div><div class="text-xs">Críticos pendientes</div></div>
+        </div>
+        <p class="text-xs">Reporte generado por ${currentUser} (${currentRole}). Base normativa: NOM-034-SSA3-2013, NOM-237-SSA1-2004.</p>`;
+      } else if (type === 'history') {
+        title.textContent = 'Historial por Ambulancia';
+        content.innerHTML = AMBULANCES.map(a => {
+          const recs = allRecords.filter(r=>r.ambulance_id===a.id).length;
+          return `<div class="flex items-center justify-between py-2 border-b border-gray-800"><span>${a.eco} · ${a.id}</span><span class="badge badge-ok">${recs} registros en la nube</span></div>`;
+        }).join('');
+      } else if (type === 'expiry') {
+        title.textContent = 'Control de Caducidades';
+        const withExp = allRecords.filter(r=>r.expiry_date);
+        if (withExp.length === 0) { content.innerHTML = '<p class="py-4">No hay ítems con fecha de caducidad registrada.</p>'; return; }
+        content.innerHTML = withExp.sort((a,b)=>new Date(a.expiry_date)-new Date(b.expiry_date)).map(r => {
+          const d = new Date(r.expiry_date); const diff = Math.round((d-new Date())/(1000*60*60*24));
+          const cls = diff<0?'badge-danger':diff<30?'badge-warn':'badge-ok';
+          const label = diff<0?'CADUCADO':diff<30?`${diff} días`:'Vigente';
+          return `<div class="flex items-center justify-between py-2 border-b border-gray-800"><span>${r.item_name} <span class="text-xs text-muted">(${r.ambulance_id})</span></span><span class="badge ${cls}">${label} · ${r.expiry_date}</span></div>`;
+        }).join('');
+      } else {
+        title.textContent = 'Estado de Flota';
+        const op = AMBULANCES.filter(a=>a.status==='operative').length;
+        content.innerHTML = `<p class="mb-3"><strong>Fecha:</strong> ${today}</p>
+        <div class="grid grid-cols-3 gap-3">
+          <div class="bg-panel rounded-lg p-3 text-center"><div class="text-2xl font-bold text-accent">${op}</div><div class="text-xs">Operativas</div></div>
+          <div class="bg-panel rounded-lg p-3 text-center"><div class="text-2xl font-bold text-warn">${AMBULANCES.filter(a=>a.status==='maintenance').length}</div><div class="text-xs">Mantenimiento</div></div>
+          <div class="bg-panel rounded-lg p-3 text-center"><div class="text-2xl font-bold text-danger">${AMBULANCES.filter(a=>a.status==='non-operative').length}</div><div class="text-xs">No operativas</div></div>
+        </div>`;
+      }
+    };
+
+    window.downloadReport = function() {
+      const content = document.getElementById('report-content').innerText;
+      const title = document.getElementById('report-title').textContent;
+      const blob = new Blob([`${title}\n${'='.repeat(40)}\n\n${content}`], {type:'text/plain'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${title.replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,10)}.txt`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      window.showToast('Reporte descargado');
+    };
+
+    window.showToast = function(msg) {
+      const t = document.getElementById('toast');
+      document.getElementById('toast-text').textContent = msg;
+      t.style.display = 'flex';
+      setTimeout(() => { t.style.display = 'none'; }, 3000);
+    };
+
+    window.showConfirm = function(title, msg, cb) {
+      document.getElementById('confirm-title').textContent = title;
+      document.getElementById('confirm-msg').textContent = msg;
+      document.getElementById('confirm-modal').style.display = 'flex';
+      confirmCallback = cb;
+      document.getElementById('confirm-ok-btn').onclick = () => { window.hideConfirm(); if (confirmCallback) confirmCallback(); };
+    };
+
+    window.hideConfirm = function() {
+      document.getElementById('confirm-modal').style.display = 'none';
+      confirmCallback = null;
+    };
+
+    lucide.createIcons();
+  </script>
+ </body>
+</html>
